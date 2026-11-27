@@ -157,6 +157,13 @@
         }
         .standings-tab-btn.active { background: var(--accent); color: #000; }
         .score-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .panel-box {
+            background: var(--card);
+            padding: 18px;
+            border-radius: 10px;
+            border: 1px solid #2a2f3a;
+            margin-bottom: 24px;
+        }
     </style>
 </head>
 <body>
@@ -180,22 +187,12 @@
         <div class="rooms-grid" id="rooms-container"></div>
     </div>
 
-    <!-- 6 OTAQLI XAL CƏDVƏLİ BÖLMƏSİ -->
+    <!-- 6 OTAQLI XAL CƏDVƏLİ BÖLMƏSİ (BÜTÜN İŞTİRAKÇILAR GÖRÜR) -->
     <div id="sec-standings" class="section">
         <h2 style="color: var(--accent); margin-bottom: 5px;">6 Otaqlı Turnir Xal Cədvəli</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 15px;">Otağı seçin və komandaların Placement + Kill xallarını izləyin.</p>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 15px;">Otağı seçin və admin yenilədikcə canlı yenilənən Placement + Kill xallarını izləyin.</p>
 
-        <div class="standings-tabs" id="standings-room-tabs"></div>
-
-        <div id="standings-admin-box" style="display:none; background: var(--card); padding: 18px; border-radius: 10px; border: 1px solid #2a2f3a; margin-bottom: 20px;">
-            <h3 style="color: var(--accent); margin-bottom: 12px;">Xal Əlavə Et / Yenilə (Otaq #<span id="score-room-label">1</span>)</h3>
-            <input type="text" id="score-team-name" placeholder="Komanda Adı (məs: saGes Esport)">
-            <div class="score-grid-2">
-                <input type="number" id="score-placement" min="0" placeholder="Placement Xalı (məs: 10)">
-                <input type="number" id="score-kills" min="0" placeholder="Kill Sayı (məs: 7)">
-            </div>
-            <button class="btn-primary" onclick="saveTeamScore()">Xalı Yadda Saxla</button>
-        </div>
+        <div class="standings-tabs" id="standings-view-tabs"></div>
 
         <div style="overflow-x:auto;">
             <table>
@@ -206,7 +203,6 @@
                         <th>Placement</th>
                         <th>Kills</th>
                         <th>Ümumi Xal</th>
-                        <th id="score-action-th" style="display:none;">Əməliyyat</th>
                     </tr>
                 </thead>
                 <tbody id="standings-table-body"></tbody>
@@ -231,9 +227,47 @@
         </div>
     </div>
 
-    <!-- ADMIN PANEL BÖLMƏSİ -->
+    <!-- ADMIN PANEL BÖLMƏSİ (XAL YENİLƏMƏ + QEYDİYYATLAR) -->
     <div id="sec-admin" class="section">
-        <h2 style="color: var(--accent); margin-bottom: 15px;">Admin Paneli</h2>
+        <h2 style="color: var(--accent); margin-bottom: 15px;">Admin İdarəetmə Paneli</h2>
+
+        <div class="panel-box">
+            <h3 style="color: var(--accent); margin-bottom: 12px;">Xal Cədvəlini Yenilə (6 Otaq)</h3>
+            <label style="display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px;">Otaq seçin:</label>
+            <select id="admin-score-room" onchange="onAdminScoreRoomChange()">
+                <option value="1">Otaq #1 - Qrup A</option>
+                <option value="2">Otaq #2 - Qrup B</option>
+                <option value="3">Otaq #3 - Qrup C</option>
+                <option value="4">Otaq #4 - Qrup D</option>
+                <option value="5">Otaq #5 - Yarımfinal</option>
+                <option value="6">Otaq #6 - Böyük Final</option>
+            </select>
+
+            <input type="text" id="score-team-name" placeholder="Komanda Adı (məs: saGes Esport)">
+            <div class="score-grid-2">
+                <input type="number" id="score-placement" min="0" placeholder="Placement Xalı (məs: 10)">
+                <input type="number" id="score-kills" min="0" placeholder="Kill Sayı (məs: 7)">
+            </div>
+            <button class="btn-primary" onclick="saveTeamScore()">Xalı Yadda Saxla və İştirakçılara Göndər</button>
+
+            <h4 style="margin-top: 20px; color: var(--text);">Seçili Otağın Xalları (Otaq #<span id="admin-score-room-label">1</span>)</h4>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Komanda</th>
+                            <th>Placement</th>
+                            <th>Kills</th>
+                            <th>Ümumi Xal</th>
+                            <th>Əməliyyat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-scores-list"></tbody>
+                </table>
+            </div>
+        </div>
+
         <h3>Qeydiyyatdan Keçən Komandalar</h3>
         <div style="overflow-x:auto;">
             <table>
@@ -292,6 +326,7 @@
     let rooms = defaultRooms.map(r => ({ ...r }));
     let registrations = [];
     let activeStandingsRoom = 1;
+    let activeAdminScoreRoom = 1;
     let scoresData = {};
 
     window.showSection = function(sec) {
@@ -346,6 +381,7 @@
         renderRooms();
         renderStandingsTabs();
         renderStandingsTable();
+        renderAdminScoresList();
     }
 
     function renderRooms() {
@@ -459,7 +495,7 @@
     };
 
     function renderStandingsTabs() {
-        const tabsEl = document.getElementById("standings-room-tabs");
+        const tabsEl = document.getElementById("standings-view-tabs");
         if (!tabsEl) return;
         tabsEl.innerHTML = "";
 
@@ -471,14 +507,6 @@
                 </button>
             `;
         }
-
-        const isAdmin = currentUser && currentUser.role === "admin";
-        const adminBox = document.getElementById("standings-admin-box");
-        const actionTh = document.getElementById("score-action-th");
-        if (adminBox) adminBox.style.display = isAdmin ? "block" : "none";
-        if (actionTh) actionTh.style.display = isAdmin ? "table-cell" : "none";
-        const roomLabel = document.getElementById("score-room-label");
-        if (roomLabel) roomLabel.innerText = activeStandingsRoom;
     }
 
     window.selectStandingsRoom = function(roomNum) {
@@ -487,11 +515,32 @@
         renderStandingsTable();
     };
 
+    window.onAdminScoreRoomChange = function() {
+        const sel = document.getElementById("admin-score-room");
+        activeAdminScoreRoom = Number(sel.value || 1);
+        document.getElementById("admin-score-room-label").innerText = activeAdminScoreRoom;
+        renderAdminScoresList();
+    };
+
+    function getSortedRoomRows(roomNum) {
+        const roomObj = scoresData[`room_${roomNum}`] || {};
+        return Object.entries(roomObj)
+            .map(([key, val]) => ({
+                key,
+                teamName: val.teamName || key,
+                placement: Number(val.placement || 0),
+                kills: Number(val.kills || 0),
+                total: Number(val.total ?? (Number(val.placement || 0) + Number(val.kills || 0)))
+            }))
+            .sort((a, b) => (b.total - a.total) || (b.kills - a.kills));
+    }
+
     window.saveTeamScore = async function() {
         if (!currentUser || currentUser.role !== "admin") {
-            return alert("Xal əlavə etmək üçün Admin girişi lazımdır.");
+            return alert("Xal yeniləmək üçün Admin girişi lazımdır.");
         }
 
+        const roomNum = Number(document.getElementById("admin-score-room").value || 1);
         const teamName = document.getElementById("score-team-name").value.trim();
         const placement = Number(document.getElementById("score-placement").value || 0);
         const kills = Number(document.getElementById("score-kills").value || 0);
@@ -503,7 +552,7 @@
         const safeKey = teamName.toLowerCase().replace(/[.#$/\[\]]/g, "_");
 
         try {
-            await set(ref(db, `standings/room_${activeStandingsRoom}/${safeKey}`), {
+            await set(ref(db, `standings/room_${roomNum}/${safeKey}`), {
                 teamName,
                 placement,
                 kills,
@@ -514,16 +563,17 @@
             document.getElementById("score-team-name").value = "";
             document.getElementById("score-placement").value = "";
             document.getElementById("score-kills").value = "";
+            alert(`Otaq #${roomNum} xal cədvəli yeniləndi!`);
         } catch (err) {
             console.error(err);
             alert("Xal yadda saxlanılarkən xəta baş verdi.");
         }
     };
 
-    window.deleteTeamScore = async function(teamKey) {
+    window.deleteTeamScore = async function(roomNum, teamKey) {
         if (!currentUser || currentUser.role !== "admin") return;
         try {
-            await remove(ref(db, `standings/room_${activeStandingsRoom}/${teamKey}`));
+            await remove(ref(db, `standings/room_${roomNum}/${teamKey}`));
         } catch (err) {
             console.error(err);
             alert("Silinərkən xəta baş verdi.");
@@ -534,21 +584,9 @@
         const tbody = document.getElementById("standings-table-body");
         if (!tbody) return;
 
-        const isAdmin = currentUser && currentUser.role === "admin";
-        const roomObj = scoresData[`room_${activeStandingsRoom}`] || {};
-
-        const rows = Object.entries(roomObj)
-            .map(([key, val]) => ({
-                key,
-                teamName: val.teamName || key,
-                placement: Number(val.placement || 0),
-                kills: Number(val.kills || 0),
-                total: Number(val.total ?? (Number(val.placement || 0) + Number(val.kills || 0)))
-            }))
-            .sort((a, b) => (b.total - a.total) || (b.kills - a.kills));
-
+        const rows = getSortedRoomRows(activeStandingsRoom);
         if (rows.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="color: var(--muted); text-align: center;">Bu otaq üçün hələ xal daxil edilməyib.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="color: var(--muted); text-align: center;">Bu otaq üçün hələ xal daxil edilməyib.</td></tr>`;
             return;
         }
 
@@ -559,12 +597,33 @@
                 <td>${r.placement}</td>
                 <td>${r.kills}</td>
                 <td><b style="color: var(--accent);">${r.total}</b></td>
-                ${isAdmin ? `<td><button class="btn-sm btn-danger" onclick="deleteTeamScore('${r.key}')">Sil</button></td>` : ""}
             </tr>
         `).join("");
     }
 
-    // Telegram botundan (/setroom) yenilənən otaq ID, şifrə və xəritə məlumatlarını canlı dinlə
+    function renderAdminScoresList() {
+        const tbody = document.getElementById("admin-scores-list");
+        if (!tbody) return;
+        document.getElementById("admin-score-room-label").innerText = activeAdminScoreRoom;
+
+        const rows = getSortedRoomRows(activeAdminScoreRoom);
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color: var(--muted); text-align: center;">Bu otaqda hələ xal yoxdur.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = rows.map((r, idx) => `
+            <tr>
+                <td><b>#${idx + 1}</b></td>
+                <td><b>${r.teamName}</b></td>
+                <td>${r.placement}</td>
+                <td>${r.kills}</td>
+                <td><b style="color: var(--accent);">${r.total}</b></td>
+                <td><button class="btn-sm btn-danger" onclick="deleteTeamScore(${activeAdminScoreRoom}, '${r.key}')">Sil</button></td>
+            </tr>
+        `).join("");
+    }
+
     onValue(ref(db, "rooms"), (snapshot) => {
         const data = snapshot.val();
         rooms = defaultRooms.map(baseRoom => {
@@ -579,7 +638,6 @@
         renderRooms();
     });
 
-    // Bütün oyunçular üçün ortaq komanda qeydiyyatlarını canlı dinlə
     onValue(ref(db, "registrations"), (snapshot) => {
         const data = snapshot.val();
         registrations = data
@@ -589,10 +647,10 @@
         renderAdminTable();
     });
 
-    // 6 otağın turnir xal cədvəlini canlı dinlə
     onValue(ref(db, "standings"), (snapshot) => {
         scoresData = snapshot.val() || {};
         renderStandingsTable();
+        renderAdminScoresList();
     });
 
     updateUI();
