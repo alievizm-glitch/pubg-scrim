@@ -1,0 +1,28 @@
+name: PUBG Scrim Telegram Bot
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Telegram Bot
+        env:
+          BOT_TOKEN: "9168083803:AAHPqnrfhll-y_PmMg7cTQ2YUlB_BV2SvQk"
+          ADMIN_TG_ID: "8914582993"
+          FIREBASE_DB_URL: "https://pubg-scrim-live-default-rtdb.firebaseio.com"
+        run: timeout 270 node bot.js || true
