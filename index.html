@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUBG Mobile Scrim & Turnuva Platformu</title>
+    <title>PUBG Mobile Scrim & Turnir Platforması</title>
     <style>
         :root {
             --bg: #0f1115;
@@ -31,6 +31,7 @@
             gap: 10px;
         }
         .logo { font-size: 1.25rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
+        .nav-btns { display: flex; flex-wrap: wrap; gap: 6px; }
         .nav-btns button {
             background: transparent;
             border: 1px solid var(--accent);
@@ -38,7 +39,6 @@
             padding: 6px 12px;
             border-radius: 5px;
             cursor: pointer;
-            margin-left: 5px;
             font-size: 0.85rem;
         }
         .nav-btns button.active, .nav-btns button:hover { background: var(--accent); color: #000; font-weight: bold; }
@@ -143,6 +143,20 @@
         th { color: var(--accent); }
         .btn-sm { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-danger { background: var(--danger); color: white; }
+
+        .standings-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .standings-tab-btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+            cursor: pointer;
+            font-weight: bold;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+        .standings-tab-btn.active { background: var(--accent); color: #000; }
+        .score-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
 <body>
@@ -150,49 +164,87 @@
 <header>
     <div class="logo">⚡ SCRIM ARENA</div>
     <div class="nav-btns">
-        <button onclick="showSection('rooms')" id="nav-rooms" class="active">6 Oda</button>
-        <button onclick="showSection('auth')" id="nav-auth">Giriş / Kayıt</button>
+        <button onclick="showSection('rooms')" id="nav-rooms" class="active">6 Otaq</button>
+        <button onclick="showSection('standings')" id="nav-standings">Xal Cədvəli</button>
+        <button onclick="showSection('auth')" id="nav-auth">Giriş / Qeydiyyat</button>
         <button onclick="showSection('admin')" id="nav-admin" style="display:none;">Admin</button>
-        <button onclick="logout()" id="nav-logout" style="display:none; border-color: var(--danger); color: var(--danger);">Çıkış</button>
+        <button onclick="logout()" id="nav-logout" style="display:none; border-color: var(--danger); color: var(--danger);">Çıxış</button>
     </div>
 </header>
 
 <div class="container">
+    <!-- 6 OTAQLI TURNİR / SCRIM BÖLMƏSİ -->
     <div id="sec-rooms" class="section active">
-        <h2 style="margin-bottom: 5px;">Aktif Scrim & Turnuva Odaları (6 Oda)</h2>
-        <p style="color: var(--muted); font-size: 0.9rem;">Oda ID ve şifreler Telegram botundan güncellendiğinde anlık görünür; kayıtlar tüm oyuncular için ortak senkronize çalışır.</p>
+        <h2 style="margin-bottom: 5px;">Aktiv Scrim & Turnir Otaqları (6 Otaq)</h2>
+        <p style="color: var(--muted); font-size: 0.9rem;">Otaq ID və şifrələr Telegram botundan yeniləndikdə anlık görünür; qeydiyyatlar bütün oyunçular üçün sinxron işləyir.</p>
         <div class="rooms-grid" id="rooms-container"></div>
     </div>
 
-    <div id="sec-auth" class="section">
-        <div class="auth-box">
-            <h2 id="auth-title">Hesaba Giriş</h2>
-            <input type="text" id="username" placeholder="Kullanıcı adı veya Takım Tagı">
-            <input type="password" id="password" placeholder="Şifre">
-            <button class="btn-primary" onclick="handleAuth()" id="auth-submit-btn">Giriş Yap</button>
-            <p style="text-align:center; margin-top:15px; font-size:0.85rem; color:var(--muted);">
-                <span id="auth-toggle-text">Hesabın yok mu?</span>
-                <a href="#" onclick="toggleAuthMode()" style="color:var(--accent); font-weight:bold;" id="auth-toggle-link">Kayıt ol</a>
-            </p>
-            <p style="text-align:center; margin-top:10px; font-size:0.75rem; color:#666;">
-                Admin girişi: <b>admin</b> / şifre: <b>12345</b>
-            </p>
-        </div>
-    </div>
+    <!-- 6 OTAQLI XAL CƏDVƏLİ BÖLMƏSİ -->
+    <div id="sec-standings" class="section">
+        <h2 style="color: var(--accent); margin-bottom: 5px;">6 Otaqlı Turnir Xal Cədvəli</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 15px;">Otağı seçin və komandaların Placement + Kill xallarını izləyin.</p>
 
-    <div id="sec-admin" class="section">
-        <h2 style="color: var(--accent); margin-bottom: 15px;">Admin Paneli</h2>
-        <h3>Kayıtlı Takımlar</h3>
+        <div class="standings-tabs" id="standings-room-tabs"></div>
+
+        <div id="standings-admin-box" style="display:none; background: var(--card); padding: 18px; border-radius: 10px; border: 1px solid #2a2f3a; margin-bottom: 20px;">
+            <h3 style="color: var(--accent); margin-bottom: 12px;">Xal Əlavə Et / Yenilə (Otaq #<span id="score-room-label">1</span>)</h3>
+            <input type="text" id="score-team-name" placeholder="Komanda Adı (məs: saGes Esport)">
+            <div class="score-grid-2">
+                <input type="number" id="score-placement" min="0" placeholder="Placement Xalı (məs: 10)">
+                <input type="number" id="score-kills" min="0" placeholder="Kill Sayı (məs: 7)">
+            </div>
+            <button class="btn-primary" onclick="saveTeamScore()">Xalı Yadda Saxla</button>
+        </div>
+
         <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
-                        <th>Oda</th>
-                        <th>Takım Adı</th>
-                        <th>Kaptan (IGL)</th>
-                        <th>Oyuncu ID</th>
-                        <th>İletişim</th>
-                        <th>İşlem</th>
+                        <th>#</th>
+                        <th>Komanda</th>
+                        <th>Placement</th>
+                        <th>Kills</th>
+                        <th>Ümumi Xal</th>
+                        <th id="score-action-th" style="display:none;">Əməliyyat</th>
+                    </tr>
+                </thead>
+                <tbody id="standings-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- GİRİŞ / QEYDİYYAT BÖLMƏSİ -->
+    <div id="sec-auth" class="section">
+        <div class="auth-box">
+            <h2 id="auth-title">Hesaba Giriş</h2>
+            <input type="text" id="username" placeholder="İstifadəçi adı və ya Komanda Taqı">
+            <input type="password" id="password" placeholder="Şifrə">
+            <button class="btn-primary" onclick="handleAuth()" id="auth-submit-btn">Daxil Ol</button>
+            <p style="text-align:center; margin-top:15px; font-size:0.85rem; color:var(--muted);">
+                <span id="auth-toggle-text">Hesabınız yoxdur?</span>
+                <a href="#" onclick="toggleAuthMode()" style="color:var(--accent); font-weight:bold;" id="auth-toggle-link">Qeydiyyatdan keçin</a>
+            </p>
+            <p style="text-align:center; margin-top:10px; font-size:0.75rem; color:#666;">
+                Admin girişi: <b>admin</b> / şifrə: <b>12345</b>
+            </p>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL BÖLMƏSİ -->
+    <div id="sec-admin" class="section">
+        <h2 style="color: var(--accent); margin-bottom: 15px;">Admin Paneli</h2>
+        <h3>Qeydiyyatdan Keçən Komandalar</h3>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Otaq</th>
+                        <th>Komanda Adı</th>
+                        <th>Kapitan (IGL)</th>
+                        <th>Oyunçu ID</th>
+                        <th>Əlaqə</th>
+                        <th>Əməliyyat</th>
                     </tr>
                 </thead>
                 <tbody id="admin-teams-list"></tbody>
@@ -201,15 +253,16 @@
     </div>
 </div>
 
+<!-- OTAĞA QEYDİYYAT MODALI -->
 <div class="modal" id="reg-modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
-        <h3 style="color: var(--accent); margin-bottom: 15px;">Oda #<span id="modal-room-num"></span> Kayıt</h3>
-        <input type="text" id="reg-team-name" placeholder="Takım Adı (Clan / Squad)">
-        <input type="text" id="reg-igl-name" placeholder="Kaptan Nickname">
+        <h3 style="color: var(--accent); margin-bottom: 15px;">Otaq #<span id="modal-room-num"></span> Qeydiyyat</h3>
+        <input type="text" id="reg-team-name" placeholder="Komanda Adı (Clan / Squad)">
+        <input type="text" id="reg-igl-name" placeholder="Kapitan Nickname">
         <input type="text" id="reg-player-id" placeholder="PUBG Karakter ID">
         <input type="text" id="reg-contact" placeholder="WhatsApp / Telegram">
-        <button class="btn-primary" onclick="submitRegistration()">Kaydı Tamamla</button>
+        <button class="btn-primary" onclick="submitRegistration()">Qeydiyyatı Tamamla</button>
     </div>
 </div>
 
@@ -225,12 +278,12 @@
     const db = getDatabase(app);
 
     const defaultRooms = [
-        { id: 1, title: "Oda #1 - Grup A", map: "Erangel | 20:00", roomId: "Bekleniyor...", pass: "****", max: 25 },
-        { id: 2, title: "Oda #2 - Grup B", map: "Miramar | 20:45", roomId: "Bekleniyor...", pass: "****", max: 25 },
-        { id: 3, title: "Oda #3 - Grup C", map: "Sanhok | 21:30", roomId: "Bekleniyor...", pass: "****", max: 25 },
-        { id: 4, title: "Oda #4 - Grup D", map: "Erangel | 22:15", roomId: "Bekleniyor...", pass: "****", max: 25 },
-        { id: 5, title: "Oda #5 - Yarı Final", map: "Miramar | 23:00", roomId: "Bekleniyor...", pass: "****", max: 25 },
-        { id: 6, title: "Oda #6 - Büyük Final", map: "Erangel | 23:45", roomId: "Bekleniyor...", pass: "****", max: 25 }
+        { id: 1, title: "Otaq #1 - Qrup A", map: "Erangel | 20:00", roomId: "Gözlənilir...", pass: "****", max: 25 },
+        { id: 2, title: "Otaq #2 - Qrup B", map: "Miramar | 20:45", roomId: "Gözlənilir...", pass: "****", max: 25 },
+        { id: 3, title: "Otaq #3 - Qrup C", map: "Sanhok | 21:30", roomId: "Gözlənilir...", pass: "****", max: 25 },
+        { id: 4, title: "Otaq #4 - Qrup D", map: "Erangel | 22:15", roomId: "Gözlənilir...", pass: "****", max: 25 },
+        { id: 5, title: "Otaq #5 - Yarımfinal", map: "Miramar | 23:00", roomId: "Gözlənilir...", pass: "****", max: 25 },
+        { id: 6, title: "Otaq #6 - Böyük Final", map: "Erangel | 23:45", roomId: "Gözlənilir...", pass: "****", max: 25 }
     ];
 
     let isLoginMode = true;
@@ -238,6 +291,8 @@
     let selectedRoomId = null;
     let rooms = defaultRooms.map(r => ({ ...r }));
     let registrations = [];
+    let activeStandingsRoom = 1;
+    let scoresData = {};
 
     window.showSection = function(sec) {
         document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
@@ -250,16 +305,16 @@
 
     window.toggleAuthMode = function() {
         isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "Hesaba Giriş" : "Yeni Hesap Oluştur";
-        document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Giriş Yap" : "Kayıt Ol";
-        document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Hesabın yok mu?" : "Zaten hesabın var mı?";
-        document.getElementById('auth-toggle-link').innerText = isLoginMode ? "Kayıt ol" : "Giriş yap";
+        document.getElementById('auth-title').innerText = isLoginMode ? "Hesaba Giriş" : "Yeni Hesab Yarat";
+        document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Daxil Ol" : "Qeydiyyatdan Keç";
+        document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Hesabınız yoxdur?" : "Artıq hesabınız var?";
+        document.getElementById('auth-toggle-link').innerText = isLoginMode ? "Qeydiyyatdan keçin" : "Daxil olun";
     };
 
     window.handleAuth = function() {
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value.trim();
-        if (!user || !pass) return alert("Lütfen tüm alanları doldurun.");
+        if (!user || !pass) return alert("Xanaları doldurun.");
 
         if (user === "admin" && pass === "12345") {
             currentUser = { username: "Admin", role: "admin" };
@@ -289,6 +344,8 @@
             document.getElementById('nav-admin').style.display = 'none';
         }
         renderRooms();
+        renderStandingsTabs();
+        renderStandingsTable();
     }
 
     function renderRooms() {
@@ -305,16 +362,16 @@
                     <span class="room-badge">${roomRegs.length} / ${room.max} Slot</span>
                     <h3>${room.title}</h3>
                     <div class="room-info">
-                        <p>🗺️ Harita & Saat: <span>${room.map}</span></p>
-                        <p>🏆 Mod: <span>Squad / TPP</span></p>
+                        <p>🗺️ Xəritə & Saat: <span>${room.map}</span></p>
+                        <p>🏆 Rejim: <span>Squad / TPP</span></p>
                     </div>
                     <div class="idp-box">
                         ${canSeeIDP
-                            ? `🔑 ID: <b>${room.roomId}</b> | Şifre: <b>${room.pass}</b>`
-                            : `🔒 ID ve Şifre yalnızca kayıtlı takımlara görünür`}
+                            ? `🔑 ID: <b>${room.roomId}</b> | Şifrə: <b>${room.pass}</b>`
+                            : `🔒 ID və Şifrə yalnız qeydiyyatlı komandalara görünür`}
                     </div>
                     <button class="btn-primary" onclick="openRegModal(${room.id})" ${roomRegs.length >= room.max ? 'disabled' : ''}>
-                        ${isRegistered ? '✅ Kayıt Tamamlandı' : (roomRegs.length >= room.max ? 'Slotlar Dolu' : 'Odaya Kayıt Ol')}
+                        ${isRegistered ? '✅ Qeydiyyat Tamamlanıb' : (roomRegs.length >= room.max ? 'Slotlar Doludur' : 'Otağa Qeydiyyat Ol')}
                     </button>
                 </div>
             `;
@@ -323,7 +380,7 @@
 
     window.openRegModal = function(roomId) {
         if (!currentUser) {
-            alert("Odaya kayıt olmak için önce giriş yapmalısın.");
+            alert("Otağa qeydiyyat olmaq üçün əvvəlcə daxil olun.");
             window.showSection('auth');
             return;
         }
@@ -342,12 +399,12 @@
         const playerId = document.getElementById('reg-player-id').value.trim();
         const contact = document.getElementById('reg-contact').value.trim();
 
-        if (!teamName || !iglName || !playerId) return alert("Zorunlu alanları doldurun.");
+        if (!teamName || !iglName || !playerId) return alert("Vacib xanaları doldurun.");
 
         const roomRegs = registrations.filter(r => Number(r.roomId) === Number(selectedRoomId));
         const currentRoom = rooms.find(r => Number(r.id) === Number(selectedRoomId));
         if (currentRoom && roomRegs.length >= currentRoom.max) {
-            return alert("Bu odanın slotları dolu.");
+            return alert("Bu otağın slotları doludur.");
         }
 
         try {
@@ -367,10 +424,10 @@
             document.getElementById('reg-contact').value = "";
 
             window.closeModal();
-            alert("Takım kaydı tamamlandı! Artık oda ID ve şifresini görebilirsin.");
+            alert("Komanda qeydiyyatı tamamlandı! Artıq otaq ID və şifrəsini görə bilərsiniz.");
         } catch (err) {
             console.error(err);
-            alert("Kayıt sırasında hata oluştu.");
+            alert("Qeydiyyat zamanı xəta baş verdi.");
         }
     };
 
@@ -380,7 +437,7 @@
         registrations.forEach(reg => {
             tbody.innerHTML += `
                 <tr>
-                    <td>Oda #${reg.roomId}</td>
+                    <td>Otaq #${reg.roomId}</td>
                     <td><b>${reg.teamName}</b></td>
                     <td>${reg.iglName}</td>
                     <td>${reg.playerId}</td>
@@ -397,11 +454,117 @@
             await remove(ref(db, `registrations/${firebaseKey}`));
         } catch (err) {
             console.error(err);
-            alert("Silme sırasında hata oluştu.");
+            alert("Silinərkən xəta baş verdi.");
         }
     };
 
-    // Telegram botundan (/setroom) güncellenen oda ID, şifre ve harita verilerini canlı dinle
+    function renderStandingsTabs() {
+        const tabsEl = document.getElementById("standings-room-tabs");
+        if (!tabsEl) return;
+        tabsEl.innerHTML = "";
+
+        for (let i = 1; i <= 6; i++) {
+            const activeClass = activeStandingsRoom === i ? "active" : "";
+            tabsEl.innerHTML += `
+                <button class="standings-tab-btn ${activeClass}" onclick="selectStandingsRoom(${i})">
+                    Otaq #${i}
+                </button>
+            `;
+        }
+
+        const isAdmin = currentUser && currentUser.role === "admin";
+        const adminBox = document.getElementById("standings-admin-box");
+        const actionTh = document.getElementById("score-action-th");
+        if (adminBox) adminBox.style.display = isAdmin ? "block" : "none";
+        if (actionTh) actionTh.style.display = isAdmin ? "table-cell" : "none";
+        const roomLabel = document.getElementById("score-room-label");
+        if (roomLabel) roomLabel.innerText = activeStandingsRoom;
+    }
+
+    window.selectStandingsRoom = function(roomNum) {
+        activeStandingsRoom = roomNum;
+        renderStandingsTabs();
+        renderStandingsTable();
+    };
+
+    window.saveTeamScore = async function() {
+        if (!currentUser || currentUser.role !== "admin") {
+            return alert("Xal əlavə etmək üçün Admin girişi lazımdır.");
+        }
+
+        const teamName = document.getElementById("score-team-name").value.trim();
+        const placement = Number(document.getElementById("score-placement").value || 0);
+        const kills = Number(document.getElementById("score-kills").value || 0);
+
+        if (!teamName) return alert("Komanda adını daxil edin.");
+        if (placement < 0 || kills < 0) return alert("Xallar mənfi ola bilməz.");
+
+        const total = placement + kills;
+        const safeKey = teamName.toLowerCase().replace(/[.#$/\[\]]/g, "_");
+
+        try {
+            await set(ref(db, `standings/room_${activeStandingsRoom}/${safeKey}`), {
+                teamName,
+                placement,
+                kills,
+                total,
+                updatedAt: Date.now()
+            });
+
+            document.getElementById("score-team-name").value = "";
+            document.getElementById("score-placement").value = "";
+            document.getElementById("score-kills").value = "";
+        } catch (err) {
+            console.error(err);
+            alert("Xal yadda saxlanılarkən xəta baş verdi.");
+        }
+    };
+
+    window.deleteTeamScore = async function(teamKey) {
+        if (!currentUser || currentUser.role !== "admin") return;
+        try {
+            await remove(ref(db, `standings/room_${activeStandingsRoom}/${teamKey}`));
+        } catch (err) {
+            console.error(err);
+            alert("Silinərkən xəta baş verdi.");
+        }
+    };
+
+    function renderStandingsTable() {
+        const tbody = document.getElementById("standings-table-body");
+        if (!tbody) return;
+
+        const isAdmin = currentUser && currentUser.role === "admin";
+        const roomObj = scoresData[`room_${activeStandingsRoom}`] || {};
+
+        const rows = Object.entries(roomObj)
+            .map(([key, val]) => ({
+                key,
+                teamName: val.teamName || key,
+                placement: Number(val.placement || 0),
+                kills: Number(val.kills || 0),
+                total: Number(val.total ?? (Number(val.placement || 0) + Number(val.kills || 0)))
+            }))
+            .sort((a, b) => (b.total - a.total) || (b.kills - a.kills));
+
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="color: var(--muted); text-align: center;">Bu otaq üçün hələ xal daxil edilməyib.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = rows.map((r, idx) => `
+            <tr>
+                <td><b>#${idx + 1}</b></td>
+                <td><b>${r.teamName}</b></td>
+                <td>${r.placement}</td>
+                <td>${r.kills}</td>
+                <td><b style="color: var(--accent);">${r.total}</b></td>
+                ${isAdmin ? `<td><button class="btn-sm btn-danger" onclick="deleteTeamScore('${r.key}')">Sil</button></td>` : ""}
+            </tr>
+        `).join("");
+    }
+
+    // Telegram botundan (/setroom) yenilənən otaq ID, şifrə və xəritə məlumatlarını canlı dinlə
     onValue(ref(db, "rooms"), (snapshot) => {
         const data = snapshot.val();
         rooms = defaultRooms.map(baseRoom => {
@@ -416,7 +579,7 @@
         renderRooms();
     });
 
-    // Tüm oyuncular için ortak takım kayıtlarını canlı dinle
+    // Bütün oyunçular üçün ortaq komanda qeydiyyatlarını canlı dinlə
     onValue(ref(db, "registrations"), (snapshot) => {
         const data = snapshot.val();
         registrations = data
@@ -424,6 +587,12 @@
             : [];
         renderRooms();
         renderAdminTable();
+    });
+
+    // 6 otağın turnir xal cədvəlini canlı dinlə
+    onValue(ref(db, "standings"), (snapshot) => {
+        scoresData = snapshot.val() || {};
+        renderStandingsTable();
     });
 
     updateUI();
