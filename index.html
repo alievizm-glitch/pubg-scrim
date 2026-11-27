@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUBG Mobile Scrim & Turnir Platforması</title>
+    <title>PUBG Mobile Scrim & Turnuva Platformu</title>
     <style>
         :root {
             --bg: #0f1115;
@@ -13,12 +13,10 @@
             --text: #ffffff;
             --muted: #9ca3af;
             --danger: #ef4444;
-            --success: #10b981;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
-        
-        /* Navbar */
+
         header {
             background: var(--card);
             padding: 15px 20px;
@@ -29,8 +27,10 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .logo { font-size: 1.3rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
+        .logo { font-size: 1.25rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
         .nav-btns button {
             background: transparent;
             border: 1px solid var(--accent);
@@ -43,12 +43,10 @@
         }
         .nav-btns button.active, .nav-btns button:hover { background: var(--accent); color: #000; font-weight: bold; }
 
-        /* Container */
         .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
         .section { display: none; }
         .section.active { display: block; }
 
-        /* Auth Box */
         .auth-box {
             max-width: 400px;
             margin: 40px auto;
@@ -67,7 +65,7 @@
             color: var(--text);
             border-radius: 6px;
         }
-        input:focus { outline: none; border-color: var(--accent); }
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
         .btn-primary {
             width: 100%;
             padding: 12px;
@@ -80,8 +78,8 @@
             font-size: 1rem;
         }
         .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* 6 Rooms Grid */
         .rooms-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -106,11 +104,11 @@
             font-size: 0.75rem;
             font-weight: bold;
         }
-        .room-card h3 { color: var(--accent); margin-bottom: 10px; }
+        .room-card h3 { color: var(--accent); margin-bottom: 10px; padding-right: 75px; }
         .room-info { font-size: 0.9rem; color: var(--muted); margin-bottom: 15px; }
         .room-info p { margin-bottom: 5px; }
         .room-info span { color: var(--text); font-weight: 600; }
-        
+
         .idp-box {
             background: #0f1115;
             padding: 10px;
@@ -121,7 +119,6 @@
             font-size: 0.9rem;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -141,7 +138,6 @@
         }
         .close-btn { float: right; cursor: pointer; font-size: 1.5rem; color: var(--muted); }
 
-        /* Admin Table */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: var(--card); }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #2a2f3a; font-size: 0.85rem; }
         th { color: var(--accent); }
@@ -154,71 +150,49 @@
 <header>
     <div class="logo">⚡ SCRIM ARENA</div>
     <div class="nav-btns">
-        <button onclick="showSection('rooms')" id="nav-rooms" class="active">6 Otaq (Turnir)</button>
-        <button onclick="showSection('auth')" id="nav-auth">Giriş / Qeydiyyat</button>
-        <button onclick="showSection('admin')" id="nav-admin" style="display:none;">Admin Panel</button>
-        <button onclick="logout()" id="nav-logout" style="display:none; border-color: var(--danger); color: var(--danger);">Çıxış</button>
+        <button onclick="showSection('rooms')" id="nav-rooms" class="active">6 Oda</button>
+        <button onclick="showSection('auth')" id="nav-auth">Giriş / Kayıt</button>
+        <button onclick="showSection('admin')" id="nav-admin" style="display:none;">Admin</button>
+        <button onclick="logout()" id="nav-logout" style="display:none; border-color: var(--danger); color: var(--danger);">Çıkış</button>
     </div>
 </header>
 
 <div class="container">
-    <!-- 6 ODALI TURNİR BÖLMƏSİ -->
     <div id="sec-rooms" class="section active">
-        <h2 style="margin-bottom: 5px;">Aktiv Scrim & Turnir Otaqları (6 Otaq)</h2>
-        <p style="color: var(--muted); font-size: 0.9rem;">Komandanızı qeydiyyatdan keçirin. ID və Şifrə oyun başlamazdan 15 dəqiqə əvvəl qeydiyyatlı oyunçulara görünəcək.</p>
-        
-        <div class="rooms-grid" id="rooms-container">
-            <!-- Otaqlar JS ilə buraya yüklənəcək -->
-        </div>
+        <h2 style="margin-bottom: 5px;">Aktif Scrim & Turnuva Odaları (6 Oda)</h2>
+        <p style="color: var(--muted); font-size: 0.9rem;">Oda ID ve şifreler Telegram botundan güncellendiğinde anlık görünür; kayıtlar tüm oyuncular için ortak senkronize çalışır.</p>
+        <div class="rooms-grid" id="rooms-container"></div>
     </div>
 
-    <!-- GİRİŞ VƏ QEYDİYYAT BÖLMƏSİ -->
     <div id="sec-auth" class="section">
         <div class="auth-box">
             <h2 id="auth-title">Hesaba Giriş</h2>
-            <input type="text" id="username" placeholder="İstifadəçi adı (və ya Komanda Taqı)">
-            <input type="password" id="password" placeholder="Şifrə">
-            <button class="btn-primary" onclick="handleAuth()" id="auth-submit-btn">Daxil Ol</button>
+            <input type="text" id="username" placeholder="Kullanıcı adı veya Takım Tagı">
+            <input type="password" id="password" placeholder="Şifre">
+            <button class="btn-primary" onclick="handleAuth()" id="auth-submit-btn">Giriş Yap</button>
             <p style="text-align:center; margin-top:15px; font-size:0.85rem; color:var(--muted);">
-                <span id="auth-toggle-text">Hesabınız yoxdur?</span> 
-                <a href="#" onclick="toggleAuthMode()" style="color:var(--accent); font-weight:bold;" id="auth-toggle-link">Qeydiyyatdan keçin</a>
+                <span id="auth-toggle-text">Hesabın yok mu?</span>
+                <a href="#" onclick="toggleAuthMode()" style="color:var(--accent); font-weight:bold;" id="auth-toggle-link">Kayıt ol</a>
             </p>
             <p style="text-align:center; margin-top:10px; font-size:0.75rem; color:#666;">
-                Admin girişi üçün: <b>admin</b> / şifrə: <b>12345</b>
+                Admin girişi: <b>admin</b> / şifre: <b>12345</b>
             </p>
         </div>
     </div>
 
-    <!-- ADMIN PANEL BÖLMƏSİ -->
     <div id="sec-admin" class="section">
-        <h2 style="color: var(--accent); margin-bottom: 15px;">Admin İdarəetmə Paneli</h2>
-        
-        <div style="background: var(--card); padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-            <h3 style="margin-bottom: 10px;">Otaq ID / Şifrə və Xəritə Yenilə</h3>
-            <select id="admin-room-select">
-                <option value="1">Otaq #1</option>
-                <option value="2">Otaq #2</option>
-                <option value="3">Otaq #3</option>
-                <option value="4">Otaq #4</option>
-                <option value="5">Otaq #5</option>
-                <option value="6">Otaq #6</option>
-            </select>
-            <input type="text" id="admin-map" placeholder="Xəritə və Saat (məs: Erangel - 21:00)">
-            <input type="text" id="admin-room-id" placeholder="Room ID (məs: 5489210)">
-            <input type="text" id="admin-room-pass" placeholder="Room Şifrə (məs: 2026)">
-            <button class="btn-primary" onclick="updateRoomDetails()">Otaq Məlumatlarını Yadda Saxla</button>
-        </div>
-
-        <h3>Qeydiyyatdan Keçən Komandalar</h3>
+        <h2 style="color: var(--accent); margin-bottom: 15px;">Admin Paneli</h2>
+        <h3>Kayıtlı Takımlar</h3>
         <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
-                        <th>Otaq</th>
-                        <th>Komanda Adı</th>
-                        <th>Kapitan (IGL)</th>
-                        <th>Oyunçu ID</th>
-                        <th>Əməliyyat</th>
+                        <th>Oda</th>
+                        <th>Takım Adı</th>
+                        <th>Kaptan (IGL)</th>
+                        <th>Oyuncu ID</th>
+                        <th>İletişim</th>
+                        <th>İşlem</th>
                     </tr>
                 </thead>
                 <tbody id="admin-teams-list"></tbody>
@@ -227,84 +201,85 @@
     </div>
 </div>
 
-<!-- OTAĞA QEYDİYYAT MODALI -->
 <div class="modal" id="reg-modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
-        <h3 style="color: var(--accent); margin-bottom: 15px;">Otaq #<span id="modal-room-num"></span> Qeydiyyat</h3>
-        <input type="text" id="reg-team-name" placeholder="Komanda Adı (Clan / Squad)">
-        <input type="text" id="reg-igl-name" placeholder="Kapitan Nickname">
-        <input type="text" id="reg-player-id" placeholder="PUBG Karakter ID (məs: 5123456789)">
-        <input type="text" id="reg-contact" placeholder="WhatsApp / Telegram nömrəsi">
-        <button class="btn-primary" onclick="submitRegistration()">Qeydiyyatı Tamamla</button>
+        <h3 style="color: var(--accent); margin-bottom: 15px;">Oda #<span id="modal-room-num"></span> Kayıt</h3>
+        <input type="text" id="reg-team-name" placeholder="Takım Adı (Clan / Squad)">
+        <input type="text" id="reg-igl-name" placeholder="Kaptan Nickname">
+        <input type="text" id="reg-player-id" placeholder="PUBG Karakter ID">
+        <input type="text" id="reg-contact" placeholder="WhatsApp / Telegram">
+        <button class="btn-primary" onclick="submitRegistration()">Kaydı Tamamla</button>
     </div>
 </div>
 
-<script>
-    // İlkin Məlumatlar (Firebase qoşulana qədər yaddaşda işləyir)
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+    const firebaseConfig = {
+        databaseURL: "https://pubg-scrim-live-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const defaultRooms = [
+        { id: 1, title: "Oda #1 - Grup A", map: "Erangel | 20:00", roomId: "Bekleniyor...", pass: "****", max: 25 },
+        { id: 2, title: "Oda #2 - Grup B", map: "Miramar | 20:45", roomId: "Bekleniyor...", pass: "****", max: 25 },
+        { id: 3, title: "Oda #3 - Grup C", map: "Sanhok | 21:30", roomId: "Bekleniyor...", pass: "****", max: 25 },
+        { id: 4, title: "Oda #4 - Grup D", map: "Erangel | 22:15", roomId: "Bekleniyor...", pass: "****", max: 25 },
+        { id: 5, title: "Oda #5 - Yarı Final", map: "Miramar | 23:00", roomId: "Bekleniyor...", pass: "****", max: 25 },
+        { id: 6, title: "Oda #6 - Büyük Final", map: "Erangel | 23:45", roomId: "Bekleniyor...", pass: "****", max: 25 }
+    ];
+
     let isLoginMode = true;
     let currentUser = JSON.parse(localStorage.getItem('scrim_user')) || null;
     let selectedRoomId = null;
+    let rooms = defaultRooms.map(r => ({ ...r }));
+    let registrations = [];
 
-    const defaultRooms = [
-        { id: 1, title: "Otaq #1 - Grup A", map: "Erangel | 20:00", roomId: "Gözlənilir...", pass: "****", max: 25 },
-        { id: 2, title: "Otaq #2 - Grup B", map: "Miramar | 20:45", roomId: "Gözlənilir...", pass: "****", max: 25 },
-        { id: 3, title: "Otaq #3 - Grup C", map: "Sanhok | 21:30", roomId: "Gözlənilir...", pass: "****", max: 25 },
-        { id: 4, title: "Otaq #4 - Grup D", map: "Erangel | 22:15", roomId: "Gözlənilir...", pass: "****", max: 25 },
-        { id: 5, title: "Otaq #5 - Yarımfinal", map: "Miramar | 23:00", roomId: "Gözlənilir...", pass: "****", max: 25 },
-        { id: 6, title: "Otaq #6 - Böyük Final", map: "Erangel | 23:45", roomId: "Gözlənilir...", pass: "****", max: 25 }
-    ];
-
-    let rooms = JSON.parse(localStorage.getItem('scrim_rooms')) || defaultRooms;
-    let registrations = JSON.parse(localStorage.getItem('scrim_regs')) || [];
-
-    function init() {
-        updateUI();
-        renderRooms();
-        renderAdminTable();
-    }
-
-    function showSection(sec) {
+    window.showSection = function(sec) {
         document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btns button').forEach(el => el.classList.remove('active'));
         document.getElementById('sec-' + sec).classList.add('active');
-        if(document.getElementById('nav-' + sec)) {
+        if (document.getElementById('nav-' + sec)) {
             document.getElementById('nav-' + sec).classList.add('active');
         }
-    }
+    };
 
-    function toggleAuthMode() {
+    window.toggleAuthMode = function() {
         isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "Hesaba Giriş" : "Yeni Hesab Yarat";
-        document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Daxil Ol" : "Qeydiyyatdan Keç";
-        document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Hesabınız yoxdur?" : "Artıq hesabınız var?";
-        document.getElementById('auth-toggle-link').innerText = isLoginMode ? "Qeydiyyatdan keçin" : "Daxil olun";
-    }
+        document.getElementById('auth-title').innerText = isLoginMode ? "Hesaba Giriş" : "Yeni Hesap Oluştur";
+        document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Giriş Yap" : "Kayıt Ol";
+        document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Hesabın yok mu?" : "Zaten hesabın var mı?";
+        document.getElementById('auth-toggle-link').innerText = isLoginMode ? "Kayıt ol" : "Giriş yap";
+    };
 
-    function handleAuth() {
+    window.handleAuth = function() {
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value.trim();
-        if(!user || !pass) return alert("Xanaları doldurun!");
+        if (!user || !pass) return alert("Lütfen tüm alanları doldurun.");
 
-        if(user === "admin" && pass === "12345") {
+        if (user === "admin" && pass === "12345") {
             currentUser = { username: "Admin", role: "admin" };
         } else {
             currentUser = { username: user, role: "player" };
         }
         localStorage.setItem('scrim_user', JSON.stringify(currentUser));
         updateUI();
-        showSection('rooms');
-    }
+        window.showSection('rooms');
+    };
 
-    function logout() {
+    window.logout = function() {
         localStorage.removeItem('scrim_user');
         currentUser = null;
         updateUI();
-        showSection('rooms');
-    }
+        window.showSection('rooms');
+    };
 
     function updateUI() {
-        if(currentUser) {
+        if (currentUser) {
             document.getElementById('nav-auth').style.display = 'none';
             document.getElementById('nav-logout').style.display = 'inline-block';
             document.getElementById('nav-admin').style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
@@ -321,10 +296,8 @@
         container.innerHTML = '';
 
         rooms.forEach(room => {
-            const roomRegs = registrations.filter(r => r.roomId == room.id);
+            const roomRegs = registrations.filter(r => Number(r.roomId) === Number(room.id));
             const isRegistered = currentUser && roomRegs.some(r => r.owner === currentUser.username);
-            
-            // ID və Şifrəni yalnız qeydiyyatdan keçənlər və Admin görür
             const canSeeIDP = (currentUser && currentUser.role === 'admin') || isRegistered;
 
             container.innerHTML += `
@@ -332,77 +305,74 @@
                     <span class="room-badge">${roomRegs.length} / ${room.max} Slot</span>
                     <h3>${room.title}</h3>
                     <div class="room-info">
-                        <p>🗺️ Xəritə & Vaxt: <span>${room.map}</span></p>
-                        <p>🏆 Rejim: <span>Squad / TPP</span></p>
+                        <p>🗺️ Harita & Saat: <span>${room.map}</span></p>
+                        <p>🏆 Mod: <span>Squad / TPP</span></p>
                     </div>
                     <div class="idp-box">
-                        ${canSeeIDP 
-                            ? `🔑 ID: <b>${room.roomId}</b> | Şifrə: <b>${room.pass}</b>` 
-                            : `🔒 ID və Şifrə yalnız qeydiyyatlı komandalara görünür`}
+                        ${canSeeIDP
+                            ? `🔑 ID: <b>${room.roomId}</b> | Şifre: <b>${room.pass}</b>`
+                            : `🔒 ID ve Şifre yalnızca kayıtlı takımlara görünür`}
                     </div>
                     <button class="btn-primary" onclick="openRegModal(${room.id})" ${roomRegs.length >= room.max ? 'disabled' : ''}>
-                        ${isRegistered ? '✅ Qeydiyyat Tamamlanıb' : (roomRegs.length >= room.max ? 'Slotlar Doludur' : 'Otağa Qeydiyyat Ol')}
+                        ${isRegistered ? '✅ Kayıt Tamamlandı' : (roomRegs.length >= room.max ? 'Slotlar Dolu' : 'Odaya Kayıt Ol')}
                     </button>
                 </div>
             `;
         });
     }
 
-    function openRegModal(roomId) {
-        if(!currentUser) {
-            alert("Otağa qeydiyyat olmaq üçün əvvəlcə hesabınıza daxil olun!");
-            showSection('auth');
+    window.openRegModal = function(roomId) {
+        if (!currentUser) {
+            alert("Odaya kayıt olmak için önce giriş yapmalısın.");
+            window.showSection('auth');
             return;
         }
         selectedRoomId = roomId;
         document.getElementById('modal-room-num').innerText = roomId;
         document.getElementById('reg-modal').style.display = 'flex';
-    }
+    };
 
-    function closeModal() {
+    window.closeModal = function() {
         document.getElementById('reg-modal').style.display = 'none';
-    }
+    };
 
-    function submitRegistration() {
+    window.submitRegistration = async function() {
         const teamName = document.getElementById('reg-team-name').value.trim();
         const iglName = document.getElementById('reg-igl-name').value.trim();
         const playerId = document.getElementById('reg-player-id').value.trim();
         const contact = document.getElementById('reg-contact').value.trim();
 
-        if(!teamName || !iglName || !playerId) return alert("Bütün vacib xanaları doldurun!");
+        if (!teamName || !iglName || !playerId) return alert("Zorunlu alanları doldurun.");
 
-        registrations.push({
-            id: Date.now(),
-            roomId: selectedRoomId,
-            teamName,
-            iglName,
-            playerId,
-            contact,
-            owner: currentUser.username
-        });
+        const roomRegs = registrations.filter(r => Number(r.roomId) === Number(selectedRoomId));
+        const currentRoom = rooms.find(r => Number(r.id) === Number(selectedRoomId));
+        if (currentRoom && roomRegs.length >= currentRoom.max) {
+            return alert("Bu odanın slotları dolu.");
+        }
 
-        localStorage.setItem('scrim_regs', JSON.stringify(registrations));
-        closeModal();
-        renderRooms();
-        renderAdminTable();
-        alert("Komandanız uğurla qeydiyyatdan keçdi! Artıq otaq ID və şifrəsini görə bilərsiniz.");
-    }
+        try {
+            await push(ref(db, "registrations"), {
+                roomId: Number(selectedRoomId),
+                teamName,
+                iglName,
+                playerId,
+                contact: contact || "-",
+                owner: currentUser.username,
+                createdAt: Date.now()
+            });
 
-    function updateRoomDetails() {
-        const rId = document.getElementById('admin-room-select').value;
-        const mapVal = document.getElementById('admin-map').value.trim();
-        const idVal = document.getElementById('admin-room-id').value.trim();
-        const passVal = document.getElementById('admin-room-pass').value.trim();
+            document.getElementById('reg-team-name').value = "";
+            document.getElementById('reg-igl-name').value = "";
+            document.getElementById('reg-player-id').value = "";
+            document.getElementById('reg-contact').value = "";
 
-        const room = rooms.find(r => r.id == rId);
-        if(mapVal) room.map = mapVal;
-        if(idVal) room.roomId = idVal;
-        if(passVal) room.pass = passVal;
-
-        localStorage.setItem('scrim_rooms', JSON.stringify(rooms));
-        renderRooms();
-        alert(`Otaq #${rId} məlumatları yeniləndi!`);
-    }
+            window.closeModal();
+            alert("Takım kaydı tamamlandı! Artık oda ID ve şifresini görebilirsin.");
+        } catch (err) {
+            console.error(err);
+            alert("Kayıt sırasında hata oluştu.");
+        }
+    };
 
     function renderAdminTable() {
         const tbody = document.getElementById('admin-teams-list');
@@ -410,24 +380,54 @@
         registrations.forEach(reg => {
             tbody.innerHTML += `
                 <tr>
-                    <td>Otaq #${reg.roomId}</td>
+                    <td>Oda #${reg.roomId}</td>
                     <td><b>${reg.teamName}</b></td>
                     <td>${reg.iglName}</td>
                     <td>${reg.playerId}</td>
-                    <td><button class="btn-sm btn-danger" onclick="deleteReg(${reg.id})">Sil</button></td>
+                    <td>${reg.contact || "-"}</td>
+                    <td><button class="btn-sm btn-danger" onclick="deleteReg('${reg.firebaseKey}')">Sil</button></td>
                 </tr>
             `;
         });
     }
 
-    function deleteReg(id) {
-        registrations = registrations.filter(r => r.id !== id);
-        localStorage.setItem('scrim_regs', JSON.stringify(registrations));
+    window.deleteReg = async function(firebaseKey) {
+        if (!firebaseKey) return;
+        try {
+            await remove(ref(db, `registrations/${firebaseKey}`));
+        } catch (err) {
+            console.error(err);
+            alert("Silme sırasında hata oluştu.");
+        }
+    };
+
+    // Telegram botundan (/setroom) güncellenen oda ID, şifre ve harita verilerini canlı dinle
+    onValue(ref(db, "rooms"), (snapshot) => {
+        const data = snapshot.val();
+        rooms = defaultRooms.map(baseRoom => {
+            const liveRoom = data && data[baseRoom.id] ? data[baseRoom.id] : {};
+            return {
+                ...baseRoom,
+                roomId: liveRoom.roomId || baseRoom.roomId,
+                pass: liveRoom.pass || baseRoom.pass,
+                map: liveRoom.map || baseRoom.map
+            };
+        });
+        renderRooms();
+    });
+
+    // Tüm oyuncular için ortak takım kayıtlarını canlı dinle
+    onValue(ref(db, "registrations"), (snapshot) => {
+        const data = snapshot.val();
+        registrations = data
+            ? Object.entries(data).map(([firebaseKey, val]) => ({ firebaseKey, ...val }))
+            : [];
         renderRooms();
         renderAdminTable();
-    }
+    });
 
-    init();
+    updateUI();
+    renderAdminTable();
 </script>
 </body>
-  </html>
+</html>
